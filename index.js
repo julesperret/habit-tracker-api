@@ -11,7 +11,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 mongoose
-   .connect("mongodb+srv://jules:Zrr23s5xDjdL6Ex6@cluster0.36joumz.mongodb.net/")
+  .connect("mongodb+srv://jules:Zrr23s5xDjdL6Ex6@cluster0.36joumz.mongodb.net/")
   .then(() => {
     console.log("Connected to MongoDB");
   })
@@ -23,66 +23,64 @@ app.listen(port, () => {
   console.log("Server running on port 3000");
 });
 
-const Habit = require("./models/habit");
+const todo = require("./models/todo");
 
-//endpoint to create a habit in the backend
-app.post("/habits", async (req, res) => {
+//endpoint to create a todo in the backend
+app.post("/todo", async (req, res) => {
   try {
-    const { title, color, repeatMode, reminder } = req.body;
+    const { title, date } = req.body;
 
-    const newHabit = new Habit({
+    const newtodo = new todo({
       title,
-      color,
-      repeatMode,
-      reminder,
+      date,
     });
 
-    const savedHabit = await newHabit.save();
-    res.status(200).json(savedHabit);
+    const savedtodo = await newtodo.save();
+    res.status(200).json(savedtodo);
   } catch (error) {
     res.status(500).json({ error: "Network error" });
   }
 });
 
-app.get("/habitslist", async (req, res) => {
+app.get("/todoslist", async (req, res) => {
   try {
-    const allHabits = await Habit.find({});
+    const alltodos = await todo.find({});
 
-    res.status(200).json(allHabits);
+    res.status(200).json(alltodos);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-app.put("/habits/:habitId/completed", async (req, res) => {
-  const habitId = req.params.habitId;
-  const updatedCompletion = req.body.completed; // The updated completion object
-
+app.put("/todo/:todoId/", async (req, res) => {
   try {
-    const updatedHabit = await Habit.findByIdAndUpdate(
-      habitId,
-      { completed: updatedCompletion },
-      { new: true }
-    );
-
-    if (!updatedHabit) {
-      return res.status(404).json({ error: "Habit not found" });
+    const { todoId } = req.params;
+    if (!req.body.title || !req.body.date) {
+      return response.status(400).send({
+        message: "send all required fields : title and date",
+      });
     }
 
-    return res.status(200).json(updatedHabit);
+    const updatedtodo = await todo.findByIdAndUpdate(todoId, req.body);
+
+    if (!updatedtodo) {
+      return res.status(404).json({ error: "todo not found" });
+    }
+
+    return res.status(200).json(updatedtodo);
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }
 });
 
-app.delete("/habits/:habitId", async (req, res) => {
+app.delete("/todo/:todoId", async (req, res) => {
   try {
-    const { habitId } = req.params;
+    const { todoId } = req.params;
 
-    await Habit.findByIdAndDelete(habitId);
+    await todo.findByIdAndDelete(todoId);
 
-    res.status(200).json({ message: "Habit deleted succusfully" });
+    res.status(200).json({ message: "todo deleted succusfully" });
   } catch (error) {
-    res.status(500).json({ error: "Unable to delete the habit" });
+    res.status(500).json({ error: "Unable to delete the todo" });
   }
 });
